@@ -1,0 +1,29 @@
+name: Build IPA
+on: [push]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Compile Swift
+        run: |
+          swiftc -o Shooter \
+            -sdk $(xcrun --sdk iphoneos --show-sdk-path) \
+            -target arm64-apple-ios15.0 \
+            -F $(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks \
+            ShooterApp.swift GameView.swift GameScene.swift
+          
+          mkdir -p Payload/Shooter.app
+          cp Shooter Payload/Shooter.app/Shooter
+          cp Info.plist Payload/Shooter.app/
+          chmod +x Payload/Shooter.app/Shooter
+      
+      - name: Pack IPA
+        run: zip -r Shooter.ipa Payload
+          
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shooter
+          path: Shooter.ipa
